@@ -8,7 +8,7 @@ import streamlit as st
 from app.ml.recommender import recommender
 
 
-API_URL = "http://127.0.0.1:8000"
+API_URL = API_URL = "https://movie-recommendation-system-v4an.onrender.com"
 
 
 st.set_page_config(
@@ -25,18 +25,18 @@ def load_movies() -> list[dict[str, Any]]:
 
 
 def load_recommendations(title: str, top_k: int, industry: str, language: str) -> dict[str, Any]:
-    response = requests.get(
-        f"{API_URL}/recommend",
-        params={
-            "title": title,
-            "top_k": top_k,
-            "industry": industry,
-            "language": language,
-        },
-        timeout=20,
-    )
-    response.raise_for_status()
-    return response.json()
+  response = requests.post(
+    f"{API_URL}/recommend",
+    json={
+        "title": title,
+        "top_k": top_k,
+        "industry": industry,
+        "language": language,
+    },
+    timeout=30,
+)
+  response.raise_for_status()
+  return response.json()
 
 
 def load_movies_with_fallback() -> tuple[list[dict[str, Any]], bool]:
@@ -54,9 +54,10 @@ def load_recommendations_with_fallback(
 ) -> tuple[dict[str, Any], bool]:
     try:
         return load_recommendations(title=title, top_k=top_k, industry=industry, language=language), True
-    except requests.RequestException:
-        return recommender.recommend(title=title, top_k=top_k, industry=industry, language=language), False
-
+    except requests.RequestException as e:
+     st.warning("⚡ API not reachable, using fallback")
+     print("API ERROR:", e)
+     return recommender.recommend(...)
 
 def inject_styles() -> None:
     st.markdown(
